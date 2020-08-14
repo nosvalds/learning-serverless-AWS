@@ -24,6 +24,13 @@ provider:
   name: aws
   runtime: nodejs12.x
   profile: personalServerlessUser
+  environment:
+    tableName: ${self:custom.tableName}
+  iamRoleStatements: # allows Lambdas to access Dyanmo DB
+    - Effect: Allow
+      Action: 
+        - dynamodb:* # what it can access
+      Resource: '*' # which resources (tables)
 
 plugins:
     - serverless-s3-sync
@@ -33,6 +40,7 @@ package:
   individually: true
 
 custom:
+    tableName: player-points
     s3Sync:
         - bucketName: nosvaldsserverlessuploadbucket-342
           localDir: UploadData
@@ -72,10 +80,17 @@ custom:
 
 functions:
   getUser:
-    handler: lambdas/getUser.handler
+    handler: lambdas/endpoints/getUser.handler
     events:
       - http:
           path: get-user/{ID}
+          method: GET
+          cors: true
+  getPlayerScore:
+    handler: lambdas/endpoints/getPlayerScore.handler
+    events:
+      - http:
+          path: get-player-score/{ID}
           method: GET
           cors: true
 
@@ -85,6 +100,17 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: nosvaldsserverlessuploadbucket-342
+    MyDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
