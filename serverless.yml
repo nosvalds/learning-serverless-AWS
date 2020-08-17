@@ -33,7 +33,26 @@ provider:
         - dynamodb:* 
         - s3:* # S3
       Resource: '*' # which resources (tables)
-
+  apiKeys:
+      - free:
+          - myFreeKey
+      - paid:
+          - myPaidKey
+  usagePlan:
+      - free: # this works the validation just doesn't like it...
+          quota:
+            limit: 1000
+            period: MONTH
+          throttle:
+            burstLimit: 200
+            rateLimit: 100
+      - paid:
+          quota:
+            limit: 10000
+            period: MONTH
+          throttle:
+            burstLimit: 2000
+            rateLimit: 1000
 plugins:
     - serverless-s3-sync
     - serverless-webpack
@@ -89,6 +108,7 @@ functions:
           path: get-user/{ID}
           method: GET
           cors: true
+          private: true
   getPlayerScore:
     handler: lambdas/endpoints/getPlayerScore.handler
     events:
