@@ -26,10 +26,12 @@ provider:
   profile: personalServerlessUser
   environment:
     tableName: ${self:custom.tableName}
+    bucketName: ${self:custom.bucketName}
   iamRoleStatements: # allows Lambdas to access Dyanmo DB
     - Effect: Allow
-      Action: 
-        - dynamodb:* # what it can access
+      Action: # what it can access
+        - dynamodb:* 
+        - s3:* # S3
       Resource: '*' # which resources (tables)
 
 plugins:
@@ -41,8 +43,9 @@ package:
 
 custom:
     tableName: player-points
+    bucketName: nosvaldsserverlessuploadbucket-342
     s3Sync:
-        - bucketName: nosvaldsserverlessuploadbucket-342
+        - bucketName: ${self:custom.bucketName}
           localDir: UploadData
 
 # you can overwrite defaults here
@@ -100,13 +103,27 @@ functions:
           path: create-player-score/{ID}
           method: POST
           cors: true
+  createFile:
+    handler: lambdas/endpoints/createFile.handler
+    events:
+      - http:
+          path: create-file/{fileName}
+          method: POST
+          cors: true
+  getFile:
+    handler: lambdas/endpoints/getFile.handler
+    events:
+      - http:
+          path: get-file/{fileName}
+          method: GET
+          cors: true
 
 resources:
   Resources:
     DemoBucketUpload:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: nosvaldsserverlessuploadbucket-342
+        BucketName: ${self:custom.bucketName}
     MyDynamoDbTable:
       Type: AWS::DynamoDB::Table
       Properties:
