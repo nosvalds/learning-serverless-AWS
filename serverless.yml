@@ -31,7 +31,8 @@ provider:
     - Effect: Allow
       Action: # what it can access
         - dynamodb:* 
-        - s3:* # S3
+        - s3:* 
+        - ses:*
       Resource: '*' # which resources (tables)
   apiKeys:
       - free:
@@ -62,7 +63,7 @@ package:
 
 custom:
     tableName: player-points
-    bucketName: nosvaldsserverlessuploadbucket-342
+    bucketName: nosvaldsserverlessuploadbucket-34269
     s3Sync:
         - bucketName: ${self:custom.bucketName}
           localDir: UploadData
@@ -101,6 +102,14 @@ custom:
 #    - exclude-me-dir/**
 
 functions:
+  sendReminder:
+    handler: lambdas/scheduledTasks/reminderEmail.handler
+    events:
+      - schedule: cron(0 9 ? * 7 *)
+  sendMorningNews:
+    handler: lambdas/scheduledTasks/morningNews.handler
+    events:
+      - schedule: cron(15 7 ? * * *)
   getUser:
     handler: lambdas/endpoints/getUser.handler
     events:
@@ -168,6 +177,21 @@ resources:
           - AttributeName: ID
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
+    myAssumeRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: myAssumeRole
+            AssumeRolePolicyDocument: 
+                Version: '2012-10-17'
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service:
+                            - lambda.amazonaws.com
+                            - apigateway.amazonaws.com
+                      Action: 
+                        - sts:AssumeRole
+            
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
